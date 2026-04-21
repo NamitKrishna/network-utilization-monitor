@@ -14,6 +14,10 @@ void compute_bandwidth(InterfaceStats *prev, InterfaceStats *curr,
     bw->rx_kbps = (double)rx_diff / elapsed_sec / 1024.0;
     bw->tx_kbps = (double)tx_diff / elapsed_sec / 1024.0;
 
+    /* track peaks */
+    if (bw->rx_kbps > bw->peak_rx_kbps) bw->peak_rx_kbps = bw->rx_kbps;
+    if (bw->tx_kbps > bw->peak_tx_kbps) bw->peak_tx_kbps = bw->tx_kbps;
+
     bw->rx_mb_total += (double)rx_diff / (1024.0 * 1024.0);
     bw->tx_mb_total += (double)tx_diff / (1024.0 * 1024.0);
 

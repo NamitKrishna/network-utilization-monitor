@@ -33,6 +33,8 @@ typedef struct {
     char   name[IFACE_NAME_LEN];
     double rx_kbps;
     double tx_kbps;
+    double peak_rx_kbps;
+    double peak_tx_kbps;
     double rx_mb_total;
     double tx_mb_total;
     double rx_history[HISTORY_SIZE];

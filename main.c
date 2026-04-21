@@ -1,15 +1,3 @@
-/*
- * main.c — Network Utilization Monitor
- *
- * Subject : Computer Networks
- * Platform: Kali Linux (VirtualBox)
- *
- * Requirements:
- *  1. Collect byte counters   → read_proc_net_dev()   [collector.c]
- *  2. Estimate bandwidth      → compute_bandwidth()   [bandwidth.c]
- *  3. Display utilization     → draw_dashboard()      [display.c]
- *  4. Update periodically     → sleep(REFRESH_SEC) loop
- */
 #define _POSIX_C_SOURCE 200809L
 #include "network_monitor.h"
 
@@ -30,7 +18,6 @@ int main(void)
     memset(curr, 0, sizeof(curr));
     memset(bw,   0, sizeof(bw));
 
-    /* Requirement 1: first baseline snapshot */
     if (read_proc_net_dev(prev, &prev_count) < 0) {
         fprintf(stderr, "Cannot open %s\n", PROC_NET_DEV);
         return 1;
@@ -45,7 +32,6 @@ int main(void)
     int tick = 0;
 
     while (running) {
-        /* Requirement 4: periodic update */
         sleep(REFRESH_SEC);
 
         clock_gettime(CLOCK_MONOTONIC, &t_curr);
@@ -55,13 +41,12 @@ int main(void)
                        + (double)(t_curr.tv_nsec - t_start.tv_nsec) / 1e9;
         t_prev = t_curr;
 
-        /* Requirement 1: collect */
         if (read_proc_net_dev(curr, &curr_count) < 0) break;
 
-        /* Requirement 2: estimate bandwidth */
         int display_count = 0;
-        for (int i = 0; i < curr_count; i++) {
-            for (int j = 0; j < prev_count; j++) {
+        int i, j;
+        for (i = 0; i < curr_count; i++) {
+            for (j = 0; j < prev_count; j++) {
                 if (strcmp(curr[i].name, prev[j].name) == 0) {
                     compute_bandwidth(&prev[j], &curr[i],
                                       &bw[display_count++], elapsed);
@@ -70,17 +55,17 @@ int main(void)
             }
         }
 
-        /* Requirement 3: display */
         tick++;
         draw_dashboard(bw, display_count, tick, uptime);
 
-        /* key input (non-blocking) */
         int ch = getch();
         if (ch == 'q' || ch == 'Q') break;
         if (ch == 'r' || ch == 'R') {
-            for (int i = 0; i < display_count; i++) {
-                bw[i].rx_mb_total = 0.0;
-                bw[i].tx_mb_total = 0.0;
+            for (i = 0; i < display_count; i++) {
+                bw[i].rx_mb_total  = 0.0;
+                bw[i].tx_mb_total  = 0.0;
+                bw[i].peak_rx_kbps = 0.0;
+                bw[i].peak_tx_kbps = 0.0;
             }
         }
 
