@@ -1,88 +1,35 @@
 # Network Utilization Monitor
+Real-time network bandwidth monitor built in C for Linux.
 
-> Computer Networks Subject Project  
-> Platform: Linux (Kali) | Language: C | UI: ncurses
+## How it works
 
----
+- Reads /proc/net/dev every second to collect byte counters
+- Estimates bandwidth using: (bytes_now - bytes_before) / elapsed_sec
+- Displays live ncurses terminal dashboard with colour bars
+- Updates periodically using sleep(1) loop
 
-## What it does
+## Project Structure
 
-| Requirement | Implementation |
-|---|---|
-| Collect byte counters | Reads `/proc/net/dev` every second |
-| Estimate bandwidth | `(bytes_now − bytes_before) ÷ elapsed_sec → KB/s` |
-| Display utilization | Live ncurses dashboard with colour bars + ASCII graph |
-| Update periodically | Configurable `REFRESH_SEC` interval (default 1 s) |
+- main.c            Entry point, main loop, signal handling
+- collector.c       Reads /proc/net/dev raw byte counters
+- bandwidth.c       Computes KB/s and maintains rolling history
+- display.c         ncurses live dashboard with bars and graph
+- network_monitor.h Shared structs and function prototypes
+- Makefile          One command build
 
----
+## Build and Run
 
-## Project structure
-
-```
-network_monitor/
-├── main.c            # Program entry, main loop, signal handling
-├── collector.c       # Reads /proc/net/dev → raw byte counters
-├── bandwidth.c       # Diffs counters → KB/s, rolling history
-├── display.c         # ncurses dashboard (bars + graph + table)
-├── network_monitor.h # Shared types and prototypes
-└── Makefile
-```
-
----
-
-## Build & run on Kali Linux
-
-```bash
-# Install ncurses if needed
-sudo apt install libncurses5-dev libncursesw5-dev
-
-# Build
+sudo apt install libncurses5-dev -y
 make
-
-# Run (needs permission to read /proc/net/dev — usually fine without sudo)
 ./network_monitor
-
-# Press q to quit, r to reset totals
-```
-
----
-
-## Key concepts demonstrated
-
-- **`/proc/net/dev`** — Linux kernel virtual filesystem exposing live network counters
-- **Byte counter differencing** — bandwidth = Δbytes / Δtime
-- **Circular buffer** — stores 50-sample rolling history for the graph
-- **ncurses** — portable terminal UI library
-- **Signal handling** — `SIGINT`/`SIGTERM` for clean exit
-
----
 
 ## Controls
 
-| Key | Action |
-|---|---|
-| `q` | Quit |
-| `r` | Reset MB totals |
+q = quit
+r = reset MB totals
 
----
+## Platform
 
-## Sample output
+Kali Linux | Language: C | Subject: Computer Networks
 
-```
- Network Utilization Monitor          uptime 00:32  tick 32
 
-Interface   RX KB/s  TX KB/s  RX bar              TX bar           RX MB tot  TX MB tot
----------------------------------------------------------------------------
-eth0          42.31     1.20  ████████░░░░░░░░    ██░░░░░░░░░░░░     1.234      0.038
-lo             0.00     0.00  ░░░░░░░░░░░░░░░░    ░░░░░░░░░░░░░░     0.000      0.000
-
-[ RX KB/s — last 50 seconds ]
-|    |
-|   |||
-|  |||||
-| |||||||  |
-|||||||||||||
---------------------------------
-
- q = quit   r = reset totals   interval: 1s   /proc/net/dev
-```
