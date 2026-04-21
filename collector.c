@@ -6,10 +6,9 @@ int read_proc_net_dev(InterfaceStats stats[], int *count)
     FILE *fp = fopen(PROC_NET_DEV, "r");
     if (!fp) { perror("fopen /proc/net/dev"); return -1; }
 
-    char line[512];
+    char line[2048];
     *count = 0;
 
-    /* skip 2 header lines */
     if (!fgets(line, sizeof(line), fp)) { fclose(fp); return -1; }
     if (!fgets(line, sizeof(line), fp)) { fclose(fp); return -1; }
 
@@ -23,19 +22,25 @@ int read_proc_net_dev(InterfaceStats stats[], int *count)
         *colon = '\0';
         char *name = line;
         while (*name == ' ') name++;
-        /* safe copy with guaranteed null terminator */
-        name[IFACE_NAME_LEN - 1] = '\0'; snprintf(s->name, IFACE_NAME_LEN, "%.31s", name);
+        snprintf(s->name, IFACE_NAME_LEN, "%.31s", name);
 
         unsigned long long dummy;
         int n = sscanf(colon + 1,
             "%llu %llu %llu %llu %llu %llu %llu %llu"
-            "%llu %llu %llu %llu %llu %llu %llu %llu",
-            &s->rx_bytes,   &s->rx_packets, &s->rx_errors, &dummy,
-            &dummy,         &dummy,         &dummy,        &dummy,
-            &s->tx_bytes,   &s->tx_packets, &s->tx_errors, &dummy,
-            &dummy,         &dummy,         &dummy,        &dummy);
+            " %llu %llu %llu %llu %llu %llu %llu %llu",
+            &s->rx_bytes,   &s->rx_packets,
+            &s->rx_errors,  &dummy,
+            &dummy,         &dummy,
+            &dummy,         &dummy,
+            &s->tx_bytes,   &s->tx_packets,
+            &s->tx_errors,  &dummy,
+            &dummy,         &dummy,
+            &dummy,         &dummy);
 
-        if (n == 16) { s->valid = 1; (*count)++; }
+        if (n >= 10) {
+            s->valid = 1;
+            (*count)++;
+        }
     }
     fclose(fp);
     return 0;
